@@ -44,9 +44,9 @@ class Breast_Dataset(Dataset):
         image = np.asarray(image, dtype=np.uint8) 
         image = self.transform(image.copy())
         if label == 'MALIGNANT':
-            label = 1.0
+            label = float(1.0)
         else:
-            label = 0.0
+            label = float(0.0)
         
         sample = {'image': image, 'label': label}
         

@@ -109,9 +109,9 @@ def train_model(model, model_dir, train_data_loader, val_data_loader,
                 image = image.to(device)
                 label = label.to(device)
                 
-                pred = model(image)
-                  
-                loss = criterion(pred, label)
+                pred = model(image.float())
+                
+                loss = criterion(pred, label.type(torch.FloatTensor))
                 
                 loss.backward()
                 ##
