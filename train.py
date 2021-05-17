@@ -40,12 +40,19 @@ def validation(model, model_dir, val_data_loader, epoch, total_steps,
             image = image.to(device)
             label = label.to(device)
             
-            pred = model(image)
+            pred = model(image.float())
+            pred = pred.squeeze()
+            label = label.type(torch.FloatTensor)
+            label = label.squeeze()
+            label = label.to(device)
             loss = criterion(pred, label)
-            total_loss.append(loss)
+            pred[pred > 0.5] = 1
+            pred[pred <= 0.5] = 0
+            total_loss.append(loss.clone().detach().cpu().numpy())
             correct_results_sum = (pred == label).sum().float()
-            acc = correct_results_sum/label.shape[0]
-            total_acc.append(acc)
+            print(pred.size())
+            acc = correct_results_sum/pred.size[0]
+            total_acc.append(acc.clone().detach().cpu().numpy())
             
         writer.add_scalar("step_val_loss", np.mean(total_loss), total_steps)
         writer.add_scalar("step_val_acc", np.mean(total_acc), total_steps)
@@ -110,15 +117,23 @@ def train_model(model, model_dir, train_data_loader, val_data_loader,
                 label = label.to(device)
                 
                 pred = model(image.float())
-                
-                loss = criterion(pred, label.type(torch.FloatTensor))
+                pred = pred.squeeze()
+                label = label.type(torch.FloatTensor)
+                label = label.squeeze()
+                label = label.to(device)
+            
+                #print(pred.is_cuda)
+                #print(label.is_cuda)
+                loss = criterion(pred, label)
                 
                 loss.backward()
                 ##
                 #tn_train, fp_train, fn_train, tp_train = confusion_matrix(pred, label).ravel()
+                pred[pred > 0.5] = 1
+                pred[pred <= 0.5] = 0
                 correct_results_sum = (pred == label).sum().float()
                 acc = correct_results_sum/label.shape[0]
-                epoch_train_acc.append(acc)
+                epoch_train_acc.append(acc.clone().detach().cpu().numpy())
                 ##
                 epoch_train_losses.append(loss.clone().detach().cpu().numpy())
                 
@@ -189,7 +204,7 @@ if __name__ == '__main__':
 
     train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(breast_dataset,
                                                                              [450, 65, 130])
-    train_data_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    train_data_loader = DataLoader(train_dataset, batch_size=args.bt, shuffle=True)
     val_data_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
     test_data_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
     
