@@ -41,17 +41,17 @@ def validation(model, model_dir, val_data_loader, epoch, total_steps,
             label = label.to(device)
             
             pred = model(image.float())
-            pred = pred.squeeze()
+            pred = pred.squeeze(-1)
             label = label.type(torch.FloatTensor)
-            label = label.squeeze()
+            
             label = label.to(device)
             loss = criterion(pred, label)
             pred[pred > 0.5] = 1
             pred[pred <= 0.5] = 0
             total_loss.append(loss.clone().detach().cpu().numpy())
             correct_results_sum = (pred == label).sum().float()
-            print(pred.size())
-            acc = correct_results_sum/pred.size[0]
+        
+            acc = correct_results_sum/pred.shape[0]
             total_acc.append(acc.clone().detach().cpu().numpy())
             
         writer.add_scalar("step_val_loss", np.mean(total_loss), total_steps)
