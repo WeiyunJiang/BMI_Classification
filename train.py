@@ -111,7 +111,7 @@ def train_model(model, model_dir, train_data_loader, val_data_loader,
                 
                 pred = model(image.float())
                 
-                loss = criterion(pred, label.type(torch.FloatTensor))
+                loss = criterion(pred.squeeze(), label.type(torch.FloatTensor).squeeze())
                 
                 loss.backward()
                 ##
