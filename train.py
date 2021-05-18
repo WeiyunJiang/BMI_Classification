@@ -14,7 +14,7 @@ import torch.nn as nn
 
 from args import breast_arg
 from tqdm import tqdm
-from models import VGG_16, Alex_Net
+from models import VGG_16, Alex_Net, Efficient_Net, SE_Net
 from dataio import Breast_Dataset
 from torch.utils.data import DataLoader
 from torch.nn.utils import clip_grad_norm_
@@ -186,24 +186,29 @@ if __name__ == '__main__':
     else:
         device = torch.device('cpu')
     print(device) 
+    num_features = 5
     if args.model == 'vgg':
-        model = VGG_16()
+        model = VGG_16(num_features, args.cat_feat)
     elif args.model == 'alexnet':
-        model = Alex_Net()
+        model = Alex_Net(num_features, args.cat_feat)
     elif args.model == 'effnet':
-        pass
+        model = Efficient_Net(num_features, args.cat_feat)
+    elif args.model == 'senet':
+        model = SE_Net(num_features, args.cat_feat)
     else:
         raise NotImplementedError('Not implemented for name={args.name}')
+    
     
     
     model.to(device) 
     total_n_params = utils.count_parameters(model)
     print(f'Total number of parameters of {args.model}: {total_n_params}')
     
-    breast_dataset = Breast_Dataset()
-
-    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(breast_dataset,
-                                                                             [450, 65, 130])
+    train_dataset = Breast_Dataset(split='train', data_aug=True)
+    val_dataset = Breast_Dataset(split='val', data_aug=False)
+    test_dataset = Breast_Dataset(split='test', data_aug=False)
+    
+    
     train_data_loader = DataLoader(train_dataset, batch_size=args.bt, shuffle=True)
     val_data_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
     test_data_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
