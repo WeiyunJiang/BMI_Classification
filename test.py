@@ -28,11 +28,12 @@ def test(model, test_data_loader, args):
         total_label = []
         model.eval()
         for step, batch in tqdm(enumerate(test_data_loader)):  
-            image, label = batch['image'], batch['label']
+            image, label, feature = batch['image'], batch['label'], batch['feature']
             image = image.to(device)
             label = label.to(device)
+            feature = feature.to(device)
             
-            pred = model(image.float())
+            pred = model(image.float(), feature.float())
             pred = pred.squeeze(-1)
             label = label.type(torch.FloatTensor)
             
@@ -40,15 +41,19 @@ def test(model, test_data_loader, args):
 
             pred[pred > 0.5] = 1
             pred[pred <= 0.5] = 0
-            total_pred.append(pred)
-            total_label.append(label)
+            total_pred.append(pred.clone().detach().cpu().numpy())
+            total_label.append(label.clone().detach().cpu().numpy())
             correct_results_sum = (pred == label).sum().float()
         
             acc = correct_results_sum/pred.shape[0]
             total_acc.append(acc.clone().detach().cpu().numpy())
-        tn, fp, fn, tp = confusion_matrix(total_pred, total_label).ravel()
-        tqdm.write("acc: %.4f" 
-                   % (np.mean(total_acc)))
+
+        print(total_pred)
+            
+        tn, fp, fn, tp = confusion_matrix(total_label, total_pred).ravel()
+        print(tp)
+        mean_acc = np.mean(total_acc)
+        tqdm.write(f"acc: {mean_acc}, tn: {tn}, fn: {fn}, tp: {tp}" )
         
      
         
@@ -78,7 +83,7 @@ if __name__ == '__main__':
     else:
         device = torch.device('cpu')
     print(device)    
-    num_features = 5
+    num_features = 2
     if args.model == 'vgg':
         model = VGG_16(num_features, args.cat_feat)
     elif args.model == 'alexnet':

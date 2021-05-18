@@ -36,11 +36,12 @@ def validation(model, model_dir, val_data_loader, epoch, total_steps,
 
         for step, batch in tqdm(enumerate(val_data_loader)):  
             
-            image, label = batch['image'], batch['label']
+            image, label, feature = batch['image'], batch['label'], batch['feature']
             image = image.to(device)
             label = label.to(device)
+            feature = feature.to(device)
             
-            pred = model(image.float())
+            pred = model(image.float(), feature.float())
             pred = pred.squeeze(-1)
             label = label.type(torch.FloatTensor)
             
@@ -112,11 +113,12 @@ def train_model(model, model_dir, train_data_loader, val_data_loader,
                 
                 optimizer.zero_grad()
                 
-                image, label = batch['image'], batch['label']
+                image, label, feature = batch['image'], batch['label'], batch['feature']
                 image = image.to(device)
                 label = label.to(device)
+                feature = feature.to(device)
                 
-                pred = model(image.float())
+                pred = model(image.float(), feature.float())
                 pred = pred.squeeze()
                 label = label.type(torch.FloatTensor)
                 label = label.squeeze()
@@ -186,7 +188,7 @@ if __name__ == '__main__':
     else:
         device = torch.device('cpu')
     print(device) 
-    num_features = 5
+    num_features = 2
     if args.model == 'vgg':
         model = VGG_16(num_features, args.cat_feat)
     elif args.model == 'alexnet':
