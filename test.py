@@ -48,12 +48,12 @@ def test(model, test_data_loader, args):
             acc = correct_results_sum/pred.shape[0]
             total_acc.append(acc.clone().detach().cpu().numpy())
 
-        print(total_pred)
+        #print(total_pred)
             
         tn, fp, fn, tp = confusion_matrix(total_label, total_pred).ravel()
-        print(tp)
+        #print(tp)
         mean_acc = np.mean(total_acc)
-        tqdm.write(f"acc: {mean_acc}, tn: {tn}, fn: {fn}, tp: {tp}" )
+        tqdm.write(f"acc: {mean_acc}, tn: {tn}, fp: {fp}, fn: {fn}, tp: {tp}" )
         
      
         
