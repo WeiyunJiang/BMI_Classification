@@ -17,7 +17,7 @@ from models import VGG_16, Alex_Net, Efficient_Net, SE_Net
 from dataio import Breast_Dataset
 from args import breast_arg
 from torch.utils.data import DataLoader
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, roc_curve, auc, RocCurveDisplay, classification_report
 
 import matplotlib.pyplot as plt
 
@@ -49,10 +49,16 @@ def test(model, test_data_loader, args):
             total_acc.append(acc.clone().detach().cpu().numpy())
 
         #print(total_pred)
-            
+        fpr, tpr, thresholds = roc_curve(total_label, total_pred)
+        roc_auc = auc(fpr, tpr)
+        display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc)
+        display.plot()  
+        plt.show()
+        plt.savefig(args.exp_name +  "roc.png")
         tn, fp, fn, tp = confusion_matrix(total_label, total_pred).ravel()
         #print(tp)
         mean_acc = np.mean(total_acc)
+        print(classification_report(total_label, total_pred))
         tqdm.write(f"acc: {mean_acc}, tn: {tn}, fp: {fp}, fn: {fn}, tp: {tp}" )
         
      
@@ -83,7 +89,8 @@ if __name__ == '__main__':
     else:
         device = torch.device('cpu')
     print(device)    
-    num_features = 2
+    if args.cat_feat: num_features = 2
+    else: num_features = 0
     if args.model == 'vgg':
         model = VGG_16(num_features, args.cat_feat)
     elif args.model == 'alexnet':
