@@ -25,6 +25,7 @@ def test(model, test_data_loader, args):
     with torch.no_grad():
         total_acc = []
         total_pred = []
+        total_raw_pred = []
         total_label = []
         model.eval()
         for step, batch in tqdm(enumerate(test_data_loader)):  
@@ -38,7 +39,7 @@ def test(model, test_data_loader, args):
             label = label.type(torch.FloatTensor)
             
             label = label.to(device)
-
+            total_raw_pred.append(pred.clone().detach().cpu().numpy())
             pred[pred > 0.5] = 1
             pred[pred <= 0.5] = 0
             total_pred.append(pred.clone().detach().cpu().numpy())
@@ -49,7 +50,7 @@ def test(model, test_data_loader, args):
             total_acc.append(acc.clone().detach().cpu().numpy())
 
         #print(total_pred)
-        fpr, tpr, thresholds = roc_curve(total_label, total_pred)
+        fpr, tpr, thresholds = roc_curve(total_label, total_raw_pred)
         roc_auc = auc(fpr, tpr)
         display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc)
         display.plot()  
