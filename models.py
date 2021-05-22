@@ -5,9 +5,10 @@ from torchvision.models import vgg16_bn, alexnet
 import torch.hub
 
 class VGG_16(nn.Module):
-    """ Naive VGG-16
-     
-    """
+    '''
+    VGG-16 with batch norm
+    Feature concatnation
+    '''
     def __init__(self, num_features=None, cat_features=False):
         super(VGG_16, self).__init__()
         self.vgg = vgg16_bn(pretrained=True)
@@ -24,12 +25,14 @@ class VGG_16(nn.Module):
     def forward(self, image, features=None):
         image = self.transform(image, mode='bilinear', size=(224, 224), align_corners=False)
         out = self.vgg(image)
-        if self.cat_features is True:
+        if self.cat_features is True: # feature concatnation
             out = torch.cat((out, features), dim=-1)
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         else:
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         out = self.sigmoid(out)
         return out
@@ -58,17 +61,20 @@ class Alex_Net(nn.Module):
         if self.cat_features is True:
             out = torch.cat((out, features), dim=-1)
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         else:
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         out = self.sigmoid(out)
         return out
     
 class Efficient_Net(nn.Module):
-    """ Efficient Net B5
-    
-    """
+    '''
+    Efficient Net with batch norm
+    Feature concatnation
+    '''
     def __init__(self, num_features=None, cat_features=False):
         super(Efficient_Net, self).__init__()
         self.effnet = torch.hub.load('rwightman/gen-efficientnet-pytorch', 'tf_efficientnet_b5_ap', pretrained=True)
@@ -85,20 +91,23 @@ class Efficient_Net(nn.Module):
     def forward(self, image, features=None):
         image = self.transform(image, mode='bilinear', size=(224, 224), align_corners=False)
         out = self.effnet(image)
-        if self.cat_features is True:
+        if self.cat_features is True: # feature concatnation
             out = torch.cat((out, features), dim=-1)
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         else:
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         out = self.sigmoid(out)
         return out
         
 class SE_Net(nn.Module):
-    """  Squeeze-and-Excitation Networks 
-         se_resnet50
-    """
+    '''
+    Squeeze-and-Excitation Net with batch norm
+    Feature concatnation
+    '''
     def __init__(self, num_features=None, cat_features=False):
         super(SE_Net, self).__init__()
         self.senet = torch.hub.load('moskomule/senet.pytorch', 'se_resnet50', pretrained=True)
@@ -115,12 +124,14 @@ class SE_Net(nn.Module):
     def forward(self, image, features=None):
         image = self.transform(image, mode='bilinear', size=(224, 224), align_corners=False)
         out = self.senet(image)
-        if self.cat_features is True:
+        if self.cat_features is True: # feature concatnation
             out = torch.cat((out, features), dim=-1)
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         else:
             out = self.out_layer1(out)
+            out = F.relu(out)
             out = self.out_layer2(out)
         out = self.sigmoid(out)
         return out

@@ -22,6 +22,22 @@ from sklearn.metrics import confusion_matrix, roc_curve, auc, RocCurveDisplay, c
 import matplotlib.pyplot as plt
 
 def test(model, test_data_loader, args):
+    '''
+
+    Parameters
+    ----------
+    model : str
+        name of the model {vgg, effnet, senet}.
+    test_data_loader : dataloader
+        dataloader for testing dataset.
+    args : arguments
+        misc arguments.
+
+    Returns
+    -------
+    Prints the TP, TN, FP, FN and save the roc curve
+
+    '''
     with torch.no_grad():
         total_acc = []
         total_pred = []
@@ -49,15 +65,15 @@ def test(model, test_data_loader, args):
             acc = correct_results_sum/pred.shape[0]
             total_acc.append(acc.clone().detach().cpu().numpy())
 
-        #print(total_pred)
+        # compute the roc curve
         fpr, tpr, thresholds = roc_curve(total_label, total_raw_pred)
         roc_auc = auc(fpr, tpr)
         display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc)
         display.plot()  
         plt.show()
-        plt.savefig(args.exp_name +  "roc.png")
+        plt.savefig(args.exp_name +  "roc.png") 
         tn, fp, fn, tp = confusion_matrix(total_label, total_pred).ravel()
-        #print(tp)
+        # compute the accuracy
         mean_acc = np.mean(total_acc)
         print(classification_report(total_label, total_pred))
         tqdm.write(f"acc: {mean_acc}, tn: {tn}, fp: {fp}, fn: {fn}, tp: {tp}" )

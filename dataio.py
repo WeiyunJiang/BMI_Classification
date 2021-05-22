@@ -15,15 +15,14 @@ class Breast_Dataset(Dataset):
     def __init__(self, split='train', data_aug=False, resolution=(128, 128), downsample=False):
         self.downsample = downsample
         self.resolution = resolution
-        
-        
+        # train split
         if split == 'train':
             dict_csv = get_dict_csv('./data_train.csv')
             self.filenames = list(dict_csv.keys())
             self.labels = [x[0] for x in dict_csv.values()]
             self.feature1 = [x[6] for x in dict_csv.values()] # Eccentricity
             self.feature2 = [x[10] for x in dict_csv.values()]# mean intensity
-            
+            # data augmentation
             if data_aug is True:
                 self.transform_image = Compose([
                     RandomVerticalFlip(),
@@ -36,18 +35,18 @@ class Breast_Dataset(Dataset):
                     ToTensor(),
                     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 ])
-        elif split == 'val':
+        # validation split
+        elif split == 'val': 
             dict_csv = get_dict_csv('./data_valid.csv')
             self.filenames = list(dict_csv.keys())
             self.labels = [x[0] for x in dict_csv.values()]
             self.feature1 = [x[6] for x in dict_csv.values()] # Eccentricity
             self.feature2 = [x[10] for x in dict_csv.values()]# mean intensity
-            
             self.transform_image = Compose([
                 ToTensor(),
                 Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
-        elif split == 'test':
+        elif split == 'test': # test split
             dict_csv = get_dict_csv('./data_test.csv')
             self.filenames = list(dict_csv.keys())
             self.labels = [x[0] for x in dict_csv.values()]
@@ -60,11 +59,8 @@ class Breast_Dataset(Dataset):
             ])
         else:
             raise NotImplementedError('Not implemented for name={split}')
-
-    
     def __len__(self):
         return len(self.filenames)
-    
     def __getitem__(self, idx):
         filename = self.filenames[idx]
         label = self.labels[idx]
@@ -72,22 +68,18 @@ class Breast_Dataset(Dataset):
             data = f['data'][()]
             img = data[:, :, 0]
             scaled_img = rescale_img_np(img, tmax=255.0, tmin=0.0)
-            PIL_image = Image.fromarray(np.uint8(scaled_img)).convert('RGB')
-        
-        if self.downsample:
+            PIL_image = Image.fromarray(np.uint8(scaled_img)).convert('RGB')    
+        if self.downsample: # downsample the image to reduce storage
             PIL_image = PIL_image.resize(self.resolution)   
-        
-        # image = np.asarray(PIL_image, dtype=np.uint8) 
         image = self.transform_image(PIL_image.copy())
-        if label == 'MALIGNANT':
+        if label == 'MALIGNANT': # define label
             label = float(1.0)
         else:
             label = float(0.0)
-        feature1 = self.feature1[idx]
+        feature1 = self.feature1[idx] # define feature
         feature2 = self.feature2[idx]
         feature_cat = np.array([feature1, feature2])
         sample = {'image': image, 'label': label, 'feature':feature_cat}
-        
         return sample
     
 def rescale_img_np(x, mode='scale', tmax=1.0, tmin=0.0):
