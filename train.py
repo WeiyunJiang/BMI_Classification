@@ -15,8 +15,8 @@ import torch.nn as nn
 from args import breast_arg
 from tqdm import tqdm
 from models import VGG_16, Alex_Net, Efficient_Net, SE_Net
-from dataio import Breast_Dataset
-from torch.utils.data import DataLoader
+from dataio import Breast_Dataset, Modality_Dataset
+from torch.utils.data import DataLoader, random_split
 from torch.nn.utils import clip_grad_norm_
 from sklearn.metrics import confusion_matrix
 
@@ -39,18 +39,18 @@ def validation(model, model_dir, val_data_loader, epoch, total_steps,
             image, label, feature = batch['image'], batch['label'], batch['feature']
             image = image.to(device)
             label = label.to(device)
-            feature = feature.to(device)
             
-            pred = model(image.float(), feature.float())
+            
+            pred = model(image.float())
             pred = pred.squeeze(-1)
-            label = label.type(torch.FloatTensor)
+            label = label.type(torch.LongTensor)
             
             label = label.to(device)
             loss = criterion(pred, label)
-            pred[pred > 0.5] = 1
-            pred[pred <= 0.5] = 0
+            # pred[pred > 0.5] = 1
+            # pred[pred <= 0.5] = 0
             total_loss.append(loss.clone().detach().cpu().numpy())
-            correct_results_sum = (pred == label).sum().float()
+            correct_results_sum = (torch.argmax(pred, dim=-1) == label).sum().float()
         
             acc = correct_results_sum/pred.shape[0]
             total_acc.append(acc.clone().detach().cpu().numpy())
@@ -83,7 +83,7 @@ def train_model(model, model_dir, train_data_loader, val_data_loader,
     checkpoints_dir = os.path.join(model_dir, 'checkpoints')
     utils.cond_mkdir(checkpoints_dir)
     writer = SummaryWriter(summaries_dir) # initial tensorboard
-    criterion = nn.BCELoss() # define loss function
+    criterion = nn.CrossEntropyLoss() # define loss function
     model.train(True) 
     # define optimizer
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
@@ -102,20 +102,21 @@ def train_model(model, model_dir, train_data_loader, val_data_loader,
             for step, batch in enumerate(train_data_loader):
                 start_time = time.time()
                 optimizer.zero_grad()
-                image, label, feature = batch['image'], batch['label'], batch['feature']
+                image, label = batch['image'], batch['label']
                 image = image.to(device)
                 label = label.to(device)
-                feature = feature.to(device)
-                pred = model(image.float(), feature.float())
+                
+                pred = model(image.float())
                 pred = pred.squeeze()
-                label = label.type(torch.FloatTensor)
+                label = label.type(torch.LongTensor)
                 label = label.squeeze()
                 label = label.to(device)
                 loss = criterion(pred, label)
                 loss.backward()
-                pred[pred > 0.5] = 1 # clip the output to 0 and 1
-                pred[pred <= 0.5] = 0
-                correct_results_sum = (pred == label).sum().float()
+                # pred[pred > 0.5] = 1 # clip the output to 0 and 1
+                # pred[pred <= 0.5] = 0
+                
+                correct_results_sum = (torch.argmax(pred, dim=-1) == label).sum().float()
                 acc = correct_results_sum/label.shape[0]
                 epoch_train_acc.append(acc.clone().detach().cpu().numpy())
                 epoch_train_losses.append(loss.clone().detach().cpu().numpy())
@@ -179,13 +180,18 @@ if __name__ == '__main__':
     total_n_params = utils.count_parameters(model)
     print(f'Total number of parameters of {args.model}: {total_n_params}')
     
-    train_dataset = Breast_Dataset(split='train', data_aug=True)
-    val_dataset = Breast_Dataset(split='val', data_aug=False)
-    test_dataset = Breast_Dataset(split='test', data_aug=False)
+    train_dataset = Modality_Dataset(split='train', data_aug=args.data_aug)
+    num_train_imgs = 781
+    num_val_imgs = len(train_dataset) - num_train_imgs
+    img_dataset_train, img_dataset_val = random_split(train_dataset, \
+                                                         [num_train_imgs, 
+                                                          num_val_imgs]
+                                                          )
+    test_dataset = Modality_Dataset(split='test', data_aug=False)
     
     
-    train_data_loader = DataLoader(train_dataset, batch_size=args.bt, shuffle=True)
-    val_data_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+    train_data_loader = DataLoader(img_dataset_train, batch_size=args.bt, shuffle=True)
+    val_data_loader = DataLoader(img_dataset_val, batch_size=1, shuffle=False)
     test_data_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
     
     train_model(model, root_path, train_data_loader, val_data_loader,

@@ -16,10 +16,10 @@ class VGG_16(nn.Module):
         self.cat_features = cat_features
         if cat_features is True:
             self.out_layer1 = nn.Linear(1000 + num_features, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         else:
             self.out_layer1 = nn.Linear(1000, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, image, features=None):
@@ -34,7 +34,7 @@ class VGG_16(nn.Module):
             out = self.out_layer1(out)
             out = F.relu(out)
             out = self.out_layer2(out)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
         return out
 
 
@@ -49,10 +49,10 @@ class Alex_Net(nn.Module):
         self.cat_features = cat_features
         if cat_features is True:
             self.out_layer1 = nn.Linear(1000 + num_features, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         else:
             self.out_layer1 = nn.Linear(1000, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, image, features=None):
@@ -67,7 +67,7 @@ class Alex_Net(nn.Module):
             out = self.out_layer1(out)
             out = F.relu(out)
             out = self.out_layer2(out)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
         return out
     
 class Efficient_Net(nn.Module):
@@ -82,10 +82,10 @@ class Efficient_Net(nn.Module):
         self.cat_features = cat_features
         if cat_features is True:
             self.out_layer1 = nn.Linear(1000 + num_features, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         else:
             self.out_layer1 = nn.Linear(1000, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         self.sigmoid = nn.Sigmoid()
         
     def forward(self, image, features=None):
@@ -100,7 +100,7 @@ class Efficient_Net(nn.Module):
             out = self.out_layer1(out)
             out = F.relu(out)
             out = self.out_layer2(out)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
         return out
         
 class SE_Net(nn.Module):
@@ -115,10 +115,10 @@ class SE_Net(nn.Module):
         self.cat_features = cat_features
         if cat_features is True:
             self.out_layer1 = nn.Linear(1000 + num_features, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         else:
             self.out_layer1 = nn.Linear(1000, 500)
-            self.out_layer2 = nn.Linear(500, 1)
+            self.out_layer2 = nn.Linear(500, 4)
         self.sigmoid = nn.Sigmoid()
         
     def forward(self, image, features=None):
@@ -133,13 +133,13 @@ class SE_Net(nn.Module):
             out = self.out_layer1(out)
             out = F.relu(out)
             out = self.out_layer2(out)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
         return out
         
 if __name__ == '__main__':
     num_features = 10
     features = torch.zeros((60, num_features))
-    cat_features = True
+    cat_features = False
     
     input_image= torch.zeros((60, 3, 256, 256))
     # model = Efficient_Net(num_features, cat_features)
