@@ -14,7 +14,7 @@ import utils
 
 from tqdm import tqdm
 from models import VGG_16, Alex_Net, Efficient_Net, SE_Net
-from dataio import Breast_Dataset
+from dataio import Breast_Dataset, Modality_Dataset
 from args import breast_arg
 from torch.utils.data import DataLoader
 from sklearn.metrics import confusion_matrix, roc_curve, auc, RocCurveDisplay, classification_report
@@ -45,22 +45,21 @@ def test(model, test_data_loader, args):
         total_label = []
         model.eval()
         for step, batch in tqdm(enumerate(test_data_loader)):  
-            image, label, feature = batch['image'], batch['label'], batch['feature']
+            image, label = batch['image'], batch['label']
             image = image.to(device)
             label = label.to(device)
-            feature = feature.to(device)
             
-            pred = model(image.float(), feature.float())
+            pred = model(image.float())
             pred = pred.squeeze(-1)
-            label = label.type(torch.FloatTensor)
+            label = label.type(torch.LongTensor)
             
             label = label.to(device)
             total_raw_pred.append(pred.clone().detach().cpu().numpy())
-            pred[pred > 0.5] = 1
-            pred[pred <= 0.5] = 0
+            # pred[pred > 0.5] = 1
+            # pred[pred <= 0.5] = 0
             total_pred.append(pred.clone().detach().cpu().numpy())
             total_label.append(label.clone().detach().cpu().numpy())
-            correct_results_sum = (pred == label).sum().float()
+            correct_results_sum = (torch.argmax(pred, dim=-1) == label).sum().float()
         
             acc = correct_results_sum/pred.shape[0]
             total_acc.append(acc.clone().detach().cpu().numpy())
@@ -123,7 +122,7 @@ if __name__ == '__main__':
     total_n_params = utils.count_parameters(model)
     print(f'Total number of parameters of {args.model}: {total_n_params}')
     
-    test_dataset = Breast_Dataset(split='test', data_aug=False)
+    test_dataset = Modality_Dataset(split='test', data_aug=False)
 
     test_data_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
     checkpoints_dir = os.path.join(root_path, 'checkpoints')
