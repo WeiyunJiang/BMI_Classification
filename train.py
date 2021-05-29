@@ -36,7 +36,7 @@ def validation(model, model_dir, val_data_loader, epoch, total_steps,
 
         for step, batch in tqdm(enumerate(val_data_loader)):  
             
-            image, label, feature = batch['image'], batch['label'], batch['feature']
+            image, label = batch['image'], batch['label']
             image = image.to(device)
             label = label.to(device)
             
