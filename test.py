@@ -57,7 +57,7 @@ def test(model, test_data_loader, args):
             total_raw_pred.append(pred.clone().detach().cpu().numpy())
             # pred[pred > 0.5] = 1
             # pred[pred <= 0.5] = 0
-            total_pred.append(pred.clone().detach().cpu().numpy())
+            total_pred.append(torch.argmax(pred, dim=-1).clone().detach().cpu().numpy())
             total_label.append(label.clone().detach().cpu().numpy())
             correct_results_sum = (torch.argmax(pred, dim=-1) == label).sum().float()
         
@@ -65,17 +65,17 @@ def test(model, test_data_loader, args):
             total_acc.append(acc.clone().detach().cpu().numpy())
 
         # compute the roc curve
-        fpr, tpr, thresholds = roc_curve(total_label, total_raw_pred)
-        roc_auc = auc(fpr, tpr)
-        display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc)
-        display.plot()  
-        plt.show()
-        plt.savefig(args.exp_name +  "roc.png") 
-        tn, fp, fn, tp = confusion_matrix(total_label, total_pred).ravel()
+        #fpr, tpr, thresholds = roc_curve(total_label, total_raw_pred)
+        #roc_auc = auc(fpr, tpr)
+        #display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc)
+        #display.plot()  
+        #plt.show()
+        #plt.savefig(args.exp_name +  "roc.png") 
+        confusion_matrix(total_label, total_pred)
         # compute the accuracy
         mean_acc = np.mean(total_acc)
         print(classification_report(total_label, total_pred))
-        tqdm.write(f"acc: {mean_acc}, tn: {tn}, fp: {fp}, fn: {fn}, tp: {tp}" )
+        tqdm.write(f"acc: {mean_acc}" )
         
      
         
